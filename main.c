@@ -93,6 +93,11 @@ uint32_t time_per_iteration = 0;
 uint32_t timer_per[32];
 uint32_t lfo_ct_last[8] = {0, 0, 0, 0, 0, 0, 0, 0};
 float lfo_index_acc[8] = {0, 0, 0, 0, 0, 0, 0, 0};
+
+#if CFG_TUD_CDC
+char cdc_rx_buffer[CFG_TUD_CDC_RX_BUFSIZE];
+#endif
+
 // const clockDivisions = [
 //   "/512", "/256", "/128", "/64", "/32", "/16", "/8", "/4", "/2", "x1", "x2",
 //   "x3", "x4", "x6", "x8", "x12", "x16", "x24", "x48"
@@ -858,6 +863,16 @@ int main() {
       midi_receive_byte(ch);
     }
     timer_per[1] = time_us_32() - us;
+
+#if CFG_TUD_CDC
+    // process serial input
+    if (tud_cdc_connected()) {
+        int count = tud_cdc_read(cdc_rx_buffer, CFG_TUD_CDC_RX_BUFSIZE);
+        if (count) {
+            // printf("Received: %s\n", cdc_rx_buffer);
+        }
+    }
+#endif
 
     // process any mode change
     for (uint8_t i = 0; i < 8; i++) {
